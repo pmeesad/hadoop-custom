@@ -20,7 +20,7 @@ localhost {
 }
 
 :443 {
-    tls pmeesad@gmail.com
+    tls admin@example.com
 
     reverse_proxy /jupyter/* http://docker-hadoop-jupyter-1:8888
     reverse_proxy /namenode/* http://namenode:9870
