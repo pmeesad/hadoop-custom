@@ -60,4 +60,4 @@ We welcome contributions to improve and expand this project. Please feel free to
 
 ## License
 
-[Specify your chosen license here]
+GNU General Public License v3.0
