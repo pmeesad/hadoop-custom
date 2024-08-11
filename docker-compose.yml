@@ -1,0 +1,247 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./web
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    image: web:latest
+    container_name: web
+    depends_on:
+      - mysql
+    environment:
+      - DATABASE_URL=mysql://root:P*ssW0rD@mysql:3306/djangodatabase        
+    volumes:
+      - ./web:/proj
+      - static_volume:/proj/static
+      - media_volume:/proj/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.dev
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.14
+
+  namenode:
+    build: ./hadoop
+    image: hadoop-custom:3.4.0
+    container_name: namenode
+    hostname: namenode
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    ports:
+      - "9870:9870"
+      - "8088:8088"
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.2
+
+  hive-metastore:
+    image: apache/hive:4.0.0-alpha-2
+    container_name: hive-metastore
+    hostname: hive-metastore
+    environment:
+      - SERVICE_NAME=metastore
+    ports:
+      - "9083:9083"
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.6
+
+  hive-server:
+    image: apache/hive:4.0.0-alpha-2
+    container_name: hive-server
+    hostname: hive-server
+    environment:
+      - SERVICE_NAME=hiveserver2
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    depends_on:
+      - hive-metastore
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.7
+
+  mysql:
+    #build: ./mysql  
+    image: mysql:8.0.33
+    container_name: mysql
+    hostname: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: P*ssW0rD            
+      MYSQL_DATABASE: djangodatabase
+      MYSQL_USER: djangouser
+      MYSQL_PASSWORD: P*ssW0rD
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.8
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.9
+
+  jupyterlab:
+    build: ./jupyterlab
+    container_name: jupyterlab
+    hostname: jupyterlab
+    depends_on:
+      - namenode
+      - mysql
+      - mongodb
+    ports:
+      - "8888:8888"
+    volumes:
+      - ~/.jupyterlab:/root/.jupyterlab
+      - jupyterlab-data:/workspace
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.10
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    hostname: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.11
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.12
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.5
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.15
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.16
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.17
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.18
+
+  dns:
+    image: phensley/docker-dns
+    container_name: dns
+    hostname: dns
+    environment:
+      - PRIMARY_DNS=8.8.8.8
+      - DOMAINS=jupyterlab=192.168.50.10,elasticsearch=192.168.50.17,kibana=192.168.50.18,grafana=192.168.50.15,prometheus=192.168.50.16,web=192.168.50.14,hadoop=192.168.50.2,hive-metastore=192.168.50.6,hive-server=192.168.50.7,mysql=192.168.50.8,mongodb=192.168.50.9,kafka=192.168.50.12,zookeeper=192.168.50.5
+    networks:
+      mynet:
+        ipv4_address: 192.168.50.13
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8053:53"
+      - "8053:53/udp"
+    volumes:
+      - /var/run/docker.sock:/docker.sock:ro
+    restart: always
+
+volumes:
+  jupyterlab-data:
+  mysql_data:
+  mongodb-data:
+  hadoop_namenode:
+  hadoop_datanode1:
+  static_volume:
+  media_volume:
+  grafana-data:
+  prometheus-data:
+  elasticsearch-data:
+
+networks:
+  mynet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.50.0/24

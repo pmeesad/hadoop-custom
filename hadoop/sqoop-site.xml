@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+  <!-- Sqoop server configuration -->
+  <property>
+    <name>sqoop.server.port</name>
+    <value>12000</value>
+    <description>The port the Sqoop server should listen on</description>
+  </property>
+
+  <!-- Database configuration -->
+  <property>
+    <name>sqoop.metastore.client.autoconnect.url</name>
+    <value>jdbc:mysql://mysql/sqoop</value>
+    <description>The JDBC URL for the metastore database</description>
+  </property>
+  <property>
+    <name>sqoop.metastore.client.autoconnect.username</name>
+    <value>sqoop</value>
+    <description>The username for the metastore database</description>
+  </property>
+  <property>
+    <name>sqoop.metastore.client.autoconnect.password</name>
+    <value>Sq00p_p@SSw0rd</value>
+    <description>The password for the metastore database</description>
+  </property>
+
+  <!-- Hadoop configuration -->
+  <property>
+    <name>sqoop.hdfs.directory</name>
+    <value>/user/sqoop</value>
+    <description>The HDFS directory used by Sqoop to store imported data</description>
+  </property>
+
+  <!-- Job execution configuration -->
+  <property>
+    <name>mapreduce.job.maps</name>
+    <value>4</value>
+    <description>The default number of map tasks to use for import</description>
+  </property>
+  <property>
+    <name>sqoop.import.max.inline.lob.size</name>
+    <value>16777216</value>
+    <description>The maximum size of LOB data to inline during import (16MB)</description>
+  </property>
+
+  <!-- Security configuration -->
+  <property>
+    <name>sqoop.metastore.kerberos.principal</name>
+    <value>sqoop/_HOST@REALM</value>
+    <description>Kerberos principal for Sqoop metastore</description>
+  </property>
+  <property>
+    <name>sqoop.metastore.kerberos.keytab.file</name>
+    <value>/etc/security/keytabs/sqoop.service.keytab</value>
+    <description>Kerberos keytab for Sqoop metastore</description>
+  </property>
+</configuration>

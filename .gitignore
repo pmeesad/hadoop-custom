@@ -1,0 +1,92 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker volumes
+data/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Java
+*.class
+*.jar
+*.war
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Node
+node_modules/
+npm-debug.log
+
+# Hadoop specific
+*.crc
+_SUCCESS
+
+# Hive specific
+metastore_db/
+
+# MongoDB
+*.wt
+*.lock
+*.bson
+*.ns
+
+# MySQL
+*.frm
+*.ibd
+*.myd
+*.myi
+
+# Elasticsearch
+elasticsearch/data/
+
+# Prometheus
+prometheus/data/
+
+# Grafana
+grafana/data/
+
+# Kibana
+kibana/data/
+
+# Zookeeper
+zookeeper/data/
+zookeeper/datalog/
+
+# Kafka
+kafka/data/
+
+# Custom workspace files (if any)
+workspace/*
+!workspace/.gitkeep
+
+# Add any other project-specific files or directories to ignore
